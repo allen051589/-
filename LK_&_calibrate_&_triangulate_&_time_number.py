@@ -118,69 +118,69 @@ def stereo_calibrate(rows, columns, world_scaling, mtx1, dist1, mtx2, dist2, fra
     return R, T
 
 def triangulate(mtx1, mtx2, R, T, xL, yL, xR, yR):
-    # 构造相机矩阵P1和P2
+    # 構造相機矩陣P1和P2
     RT1 = np.hstack((np.eye(3), np.zeros((3, 1))))
     P1 = mtx1 @ RT1
 
     RT2 = np.hstack((R, T.reshape(-1, 1)))
     P2 = mtx2 @ RT2
 
-    # 将点坐标转换为二维齐次坐标形式
+    # 將點座標轉換為二維齊次座標形式
     points1 = np.array([xL, yL, 1]).reshape(-1, 1)
     points2 = np.array([xR, yR, 1]).reshape(-1, 1)
 
     # 使用OpenCV的triangulatePoints函数
     points4D = cv.triangulatePoints(P1, P2, points1[:2], points2[:2])
 
-    # 将齐次坐标转换为3D坐标
+    # 將齊次座標轉換為3D座標
     points3D = points4D / points4D[3]
     
     return points3D[:3].ravel()
 
 def pickROI(winName, img, interpolation=cv.INTER_LINEAR):
-    # 初始图像的默认宽度和高度
+    # 初始影像的預設寬度和高度
     maxW, maxH = img.shape[1], img.shape[0]
-    # 初始化图像的显示区域
+    # 初始化影像的顯示區域
     x0, y0, x1, y1 = 0, 0, maxW, maxH
     
     while True:
-        # 计算显示比例
+        # 計算顯示比例
         scale_x = maxW / (x1 - x0)
         scale_y = maxH / (y1 - y0)
         scale = min(scale_x, scale_y)
 
-        # 根据比例调整图像大小
+        # 根據比例調整影像大小
         imgResized = cv.resize(img[y0:y1,x0:x1], None, fx=scale, fy=scale, interpolation=interpolation)
         
-        # 使用cv.selectROI选择区域
+        # 使用cv.selectROI選擇區域
         roi = cv.selectROI(winName, imgResized, fromCenter=False)
-        if roi[2] > 0 and roi[3] > 0:  # 确保选择的ROI是有效的
-            # 计算ROI在原图中的坐标
+        if roi[2] > 0 and roi[3] > 0:  # 確保選擇的ROI是有效的
+            # 計算ROI在原圖中的座標
             roi_x0 = int((roi[0] / scale) + x0)
             roi_y0 = int((roi[1] / scale) + y0)
             roi_x1 = int((roi[0] + roi[2]) / scale) + x0
             roi_y1 = int((roi[1] + roi[3]) / scale) + y0
             
-            # 更新坐标以进一步放大或确认选择
+            # 更新坐標以進一步放大或確認選擇
             x0, y0, x1, y1 = roi_x0, roi_y0, roi_x1, roi_y1
             w = x1 - x0
             h = y1 - y0
             
-            # 如果用户满意选择，按ESC键退出循环
+            # 如果用戶滿意選擇，按ESC鍵退出循環
             key = cv.waitKey(0) & 0xFF
             if key == 27:  # ESC key
                 cv.destroyAllWindows()
                 break
         else:
-            # 如果用户没有选择有效区域，直接退出
+            # 如果使用者沒有選擇有效區域，直接退出
             cv.destroyAllWindows()
             return None
 
     return (x0, y0, w, h)
 
 # 計算相機校準參數
-mtx1, dist1 = calibrate_camera("LEFT",8, 5, 29.0115, 'D:/Code/school_paper/LK_&_triangulate/stereo_images/stereo_imagesL/*')
-mtx2, dist2 = calibrate_camera("RIGHT",8, 5, 29.0115, 'D:/Code/school_paper/LK_&_triangulate/stereo_images/stereo_imagesR/*')
+mtx1, dist1 = calibrate_camera("LEFT", 8, 5, 29.0115, 'D:/Code/school_paper/LK_&_triangulate/stereo_images/stereo_imagesL/*')
+mtx2, dist2 = calibrate_camera("RIGHT", 8, 5, 29.0115, 'D:/Code/school_paper/LK_&_triangulate/stereo_images/stereo_imagesR/*')
  
 # 進行立體校準
 R, T = stereo_calibrate(8, 5, 29.0115, mtx1, dist1, mtx2, dist2, 'D:/Code/school_paper/LK_&_triangulate/stereo_images/stereo_imagesL/*', 'D:/Code/school_paper/LK_&_triangulate/stereo_images/stereo_imagesR/*')
@@ -223,11 +223,11 @@ for i in range(features_num):
     if len(rois1) < i + 1:  # 如果用戶選擇取消，則停止選擇
         break
 
-# 计算每个ROI中心的二维坐标，并进行三角化以得到初始的三维坐标
-initial_p3ds = []  # 存储初始三维坐标
+# 計算每個ROI中心的二維座標，並進行三角化以獲得初始的三維座標
+initial_p3ds = []  # 儲存初始三維座標
 
 for i in range(len(rois0)):
-    # 计算ROI中心点坐标
+    # 計算ROI中心點座標
     x0, y0, w0, h0 = rois0[i]
     x1, y1, w1, h1 = rois1[i]
     centerX0 = x0 + w0 / 2
@@ -235,11 +235,11 @@ for i in range(len(rois0)):
     centerX1 = x1 + w1 / 2
     centerY1 = y1 + h1 / 2
 
-    # 使用中心点坐标进行三角化
+    # 使用中心點座標進行三角化
     p3d = triangulate(mtx1, mtx2, R, T, centerX0, centerY0, centerX1, centerY1)
     initial_p3ds.append(p3d)
     
-# 初始化用于存储数据的列表
+# 初始化用於儲存資料的列表
 distance_data = []
 
 cv.destroyAllWindows()  # 關閉所有OpenCV窗口
@@ -301,22 +301,22 @@ while True:
     cv.imshow("Cam0_Image_tracking", img00)  # 顯示跟蹤後的圖像
     cv.imshow("Cam1_Image_tracking", img01)  # 顯示跟蹤後的圖像
 
-    # 使用得到的坐标进行三角化计算，并计算与初始三维坐标的距离
+    # 使用所得的座標進行三角化計算，並計算與初始三維座標的距離
     for i in range(min(len(roi_info_0), len(roi_info_1))):
         xL, yL = roi_info_0[i]
         xR, yR = roi_info_1[i]
-        # 假设triangulate函数已正确定义，且mtx1, mtx2, R, T等参数已准备好
+        # 假設triangulate函數已正確定義，且mtx1, mtx2, R, T等參數已準備好
         p3d = triangulate(mtx1, mtx2, R, T, xL, yL, xR, yR)
 
-        # 计算与初始三维坐标的距离
-        initial_p3d = initial_p3ds[i]  # 获取初始三维坐标
-        distance = p3d - initial_p3d  # 计算距离
+        # 計算與初始三維座標的距離
+        initial_p3d = initial_p3ds[i]  # 取得初始三維座標
+        distance = p3d - initial_p3d  # 計算距離
         physical_distance = np.linalg.norm(distance)
 
-        # 即时输出每个ROI的当前三维坐标和与初始位置的距离
+        # 即時輸出每個ROI的目前三維座標和與初始位置的距離
         print(f"\rROI {i+1} 的 X 方向距离: {distance[0]:>20.10f}, Y 方向距离: {distance[1]:>20.10f}, Z 方向距离: {distance[2]:>20.10f}, 与初始位置的距离: {np.linalg.norm(distance)}", end=' ')
 
-        # 累积每个ROI的距离数据
+        # 累積每個ROI的距離數據
         distance_data.append((i+1, distance[0], distance[1], distance[2], physical_distance))
 
     frame_count += 1  # 增加幀數計數器
@@ -333,10 +333,10 @@ fps_all = frame_count / seconds  # 計算幀速率
 
 print(f"\n實驗總花費時間：{seconds:.10f} 秒\n實驗總平均 FPS: {fps_all:.10f}")  # 打印估計的幀速率信息
  
-# 将累积的数据转换为pandas DataFrame
+# 將累積的資料轉換為pandas DataFrame
 df = pd.DataFrame(distance_data, columns=['ROI', 'X方向距離', 'Y方向距離', 'Z方向距離', '與初始位置的總距離'])
 
-# 指定Excel文件路径
+# 指定Excel檔案路徑
 excel_path = "C:/Users/allen/OneDrive/桌面/All_distance_data.xlsx" 
 
 # 保存DataFrame到Excel文件
