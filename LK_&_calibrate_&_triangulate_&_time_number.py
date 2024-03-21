@@ -1,9 +1,9 @@
-import cv2 as cv  # 導入OpenCV庫，別名為cv
-import glob  # 導入glob庫，用於處理文件路徑
-import numpy as np  # 導入NumPy庫，別名為np
+import cv2 as cv  
+import glob  
+import numpy as np  
 import time
 import pandas as pd
-import os  # 引入os模块，用于清空屏幕
+import os  
 
 def calibrate_camera(name, rows, columns, world_scaling, images_folder):
     # rows = checkerboard的行數
@@ -252,7 +252,7 @@ end_time = start_all + 20
 
 while True:
 
-    #os.system('cls' if os.name == 'nt' else 'clear')  # 清空屏幕
+    os.system('cls' if os.name == 'nt' else 'clear')  # 清空屏幕
 
     if time.time() > end_time:  # 檢查是否超過10秒
         break  # 如果超過10秒，則跳出循環
@@ -314,7 +314,7 @@ while True:
         physical_distance = np.linalg.norm(distance)
 
         # 即時輸出每個ROI的目前三維座標和與初始位置的距離
-        print(f"\rROI {i+1} 的 X 方向距离: {distance[0]:>20.10f}, Y 方向距离: {distance[1]:>20.10f}, Z 方向距离: {distance[2]:>20.10f}, 与初始位置的距离: {np.linalg.norm(distance)}", end=' ')
+        print(f"ROI {i+1} 的 X 方向距离: {distance[0]:>20.10f}, Y 方向距离: {distance[1]:>20.10f}, Z 方向距离: {distance[2]:>20.10f}, 与初始位置的距离: {np.linalg.norm(distance)}")
 
         # 累積每個ROI的距離數據
         distance_data.append((i+1, distance[0], distance[1], distance[2], physical_distance))
